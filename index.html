@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>নৈমিত্তিক ছুটির ফরম</title>
+  <!-- Noto Sans Bengali ফন্ট লোড করা হচ্ছে -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      /* ফন্ট যোগ করা হলো */
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+      color: #555;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      box-sizing: border-box; /* 일관된 사이징 보장 */
+      font-family: 'Noto Sans Bengali', sans-serif;
+    }
+    input[type="date"] {
+      padding: 8px; /* তারিখ ইনপুটের প্যাডিং ঠিক করা */
+    }
+    button {
+      margin-top: 25px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .print-btns {
+      display: flex;
+      gap: 10px;
+      /* বাটন একটি হলে এটি সেন্টারে দেখাবে */
+      justify-content: center;
+    }
+    .print-btns button {
+        /* বাটন একটি হলে যেন পুরো জায়গা না নেয় */
+        max-width: 200px; 
+    }
+    #schoolList {
+      border: 1px solid #ccc;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: none;
+      background: #fff;
+      position: absolute;
+      width: 100%;
+      max-width: calc(800px - 60px); /* কন্টেইনারের প্যাডিং বাদ দিয়ে */
+      z-index: 10;
+    }
+    .school-item {
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .school-item:hover {
+      background-color: #e8f0fe;
+    }
+    /* ইনপুট গ্রুপকে রিলেটিভ করা যাতে ড্রপডাউন ঠিকভাবে পজিশন হয় */
+    .input-group {
+        position: relative;
+    }
+
+    /* --- নতুন কাস্টম অ্যালার্টের জন্য CSS --- */
+    .modal-overlay {
+      display: none; /* ডিফল্টভাবে লুকানো থাকবে */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #ffffff;
+      margin: auto;
+      padding: 25px 30px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .modal-content p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .modal-close-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .modal-close-btn:hover {
+      background-color: #0056b3;
+    }
+    /* --- CSS শেষ --- */
+
+    /* প্রিন্ট স্টাইল */
+    @media print {
+      @page {
+        margin: 0.8in; /* প্রিন্ট মার্জিন */
+      }
+      body {
+        background-color: #fff;
+      }
+      body * {
+        visibility: hidden;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 14px !important;
+        margin: 0;
+        padding: 0;
+      }
+      #printArea p.date-line {
+        text-align: left !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>নৈমিত্তিক ছুটির আবেদনপত্র</h2>
+
+    <!-- সার্চ ইনপুটকে একটি গ্রুপে রাখা হলো -->
+    <div class="input-group">
+        <label for="schoolSearch">বিদ্যালয়ের নাম:</label>
+        <input type="text" id="schoolSearch" placeholder="বিদ্যালয়ের নাম লিখে সার্চ করুন...">
+        <div id="schoolList"></div>
+    </div>
+
+    <label for="name">আবেদনকারীর নাম:</label>
+    <input type="text" id="name" placeholder="নাম লিখুন">
+
+    <label for="designation">পদবি:</label>
+    <input type="text" id="designation" value="সহকারী শিক্ষক">
+
+    <label for="startDate">ছুটি শুরুর তারিখ:</label>
+    <input type="date" id="startDate">
+
+    <label for="endDate">ছুটি শেষের তারিখ:</label>
+    <input type="date" id="endDate">
+
+    <label for="days">মোট দিনের সংখ্যা:</label>
+    <input type="number" id="days" readonly style="background-color: #eee;">
+
+    <label for="reason">ছুটির কারণ:</label>
+    <textarea id="reason" rows="3" placeholder="ছুটির কারণ লিখুন (খালি রাখলে 'ব্যক্তিগত ও পারিবারিক' দেখাবে)"></textarea>
+
+    <label for="address">ঠিকানা:</label>
+    <input type="text" id="address" value="বদরগঞ্জ, রংপুর">
+
+    <!-- নতুন ইনপুট ফিল্ড যোগ করা হলো -->
+    <label for="previousLeave">পূর্বের ভোগকৃত ছুটি (দিন):</label>
+    <!-- type="number" কে "text" করা হলো এবং inputmode="numeric" ও oninput ইভেন্ট যোগ করা হলো -->
+    <input type="text" id="previousLeave" inputmode="numeric" oninput="sanitizeNumericInput(this)" placeholder="পূর্বের ছুটির সংখ্যা লিখুন (যেমন: ১২ বা 12)">
+
+    <button onclick="generatePreview()">ফরম প্রিভিউ দেখুন</button>
+
+    <div id="preview" style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;"></div>
+    
+    <div class="print-btns" id="printButtons" style="display:none; margin-top:20px;">
+      <button onclick="printOnlyPreview()">🖨️ প্রিন্ট করুন</button>
+      <!-- পিডিএফ বাটনটি মুছে ফেলা হয়েছে -->
+    </div>
+  </div>
+
+  <!-- --- নতুন কাস্টম অ্যালার্টের জন্য HTML --- -->
+  <div id="customAlert" class="modal-overlay">
+    <div class="modal-content">
+      <p id="modalMessage">অ্যালার্ট মেসেজ এখানে থাকবে</p>
+      <button id="modalCloseBtn" class="modal-close-btn">ঠিক আছে</button>
+    </div>
+  </div>
+  <!-- --- HTML শেষ --- -->
+
+  <!-- html2pdf.js লাইব্রেরি মুছে ফেলা হয়েছে -->
+  
+  <script>
+    /* --- কাস্টম অ্যালার্টের জন্য জাভাস্ক্রিপ্ট --- */
+    const modal = document.getElementById('customAlert');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    function showAlert(message) {
+      modalMessage.textContent = message;
+      modal.style.display = 'flex';
+    }
+
+    modalCloseBtn.onclick = function() {
+      modal.style.display = 'none';
+    }
+    // মডালের বাইরে ক্লিক করলে বন্ধ হবে
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+    /* --- কাস্টম অ্যালার্ট জাভাস্ক্রিপ্ট শেষ --- */
+
+
+    /* --- স্কুল সার্চের জন্য জাভাস্ক্রিপ্ট --- */
+    const schools = [
+        "মানসিংহপুর সরকারি প্রাথমিক বিদ্যালয়", 
+        "পারবিষ্ণুপুর সরকারি প্রাথমিক বিদ্যালয়", 
+        "ঘৃলাই কুটিরপাড়া সরকারি প্রাথমিক বিদ্যালয়", 
+        "বখশীগঞ্জ সরকারি প্রাথমিক বিদ্যালয়",
+        "কুতুবপুর সরকারি প্রাথমিক বিদ্যালয়",
+        "রাধাকৃষ্ণপুর সরকারি প্রাথমিক বিদ্যালয়"
+    ];
+
+    const schoolSearch = document.getElementById('schoolSearch');
+    const schoolList = document.getElementById('schoolList');
+
+    function showSchools(list) {
+      schoolList.innerHTML = '';
+      if (list.length === 0) {
+        schoolList.style.display = 'none';
+        return;
+      }
+      list.forEach(school => {
+        const div = document.createElement('div');
+        div.className = 'school-item';
+        div.textContent = school;
+        div.onclick = () => {
+          schoolSearch.value = school;
+          schoolList.style.display = 'none';
+        };
+        schoolList.appendChild(div);
+      });
+      schoolList.style.display = 'block';
+    }
+
+    schoolSearch.addEventListener('input', () => {
+      const keyword = schoolSearch.value.toLowerCase();
+      const filtered = schools.filter(s => s.toLowerCase().includes(keyword));
+      showSchools(filtered);
+    });
+    
+    // ড্রপডাউনের বাইরে ক্লিক করলে বন্ধ করার জন্য
+    document.addEventListener('click', (e) => {
+      // schoolSearch ইনপুট বা schoolList-এর মধ্যে ক্লিক না হলে লিস্ট হাইড করো
+      if (e.target.id !== 'schoolSearch' && !schoolList.contains(e.target)) {
+        schoolList.style.display = 'none';
+      }
+    });
+
+    /* --- দিন গণনার জাভাস্ক্রিপ্ট --- */
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const daysInput = document.getElementById('days');
+
+    function calculateDays() {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+
+      if (startDateInput.value && endDateInput.value && end < start) {
+          showAlert("শেষের তারিখ শুরুর তারিখের আগে হতে পারে না।");
+          endDateInput.value = ''; // শেষ তারিখ খালি করে দিন
+          daysInput.value = '';
+          return;
+      }
+
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        daysInput.value = diffDays;
+      } else {
+        daysInput.value = '';
+      }
+    }
+
+    startDateInput.addEventListener('change', calculateDays);
+    endDateInput.addEventListener('change', calculateDays);
+
+    /* --- নতুন: ইনপুট ফিল্ডে শুধু বাংলা বা ইংরেজি সংখ্যা রাখার ফাংশন --- */
+    function sanitizeNumericInput(inputElement) {
+      // এই ফাংশনটি শুধু ০-৯ এবং ০-৯ সংখ্যাগুলো ইনপুটে রাখবে, বাকি সব মুছে দেবে
+      let value = inputElement.value;
+      let sanitizedValue = value.replace(/[^০-৯0-9]/g, ''); // শুধু বাংলা বা ইংরেজি অঙ্ক রাখার জন্য Regex
+      inputElement.value = sanitizedValue;
+    }
+
+    /* --- নতুন: বাংলা সংখ্যাকে ইংরেজি সংখ্যায় রূপান্তর করার ফাংশন --- */
+    function convertBanglaToNumeric(str) {
+      if (!str) return '';
+      const banglaNumerals = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      let numericStr = '';
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const index = banglaNumerals.indexOf(char);
+        if (index !== -1) {
+          numericStr += index; // বাংলা পেলে ইংরেজি যোগ করো
+        } else if (char >= '0' && char <= '9') {
+          numericStr += char; // ইংরেজি পেলে সেটাই যোগ করো
+        }
+        // অন্য কোনো অক্ষর (যদিও স্যানিটাইজ করা হয়েছে) থাকলে বাদ পড়বে
+      }
+      return numericStr;
+    }
+
+
+    /* --- বাংলা ফরম্যাটিং ফাংশন --- */
+    function formatDateBangla(dateStr) {
+      if (!dateStr) return '';
+      const months = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+      const date = new Date(dateStr);
+      const day = date.getDate().toString().replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+      const year = date.getFullYear().toString().replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+      return `${day} ${months[date.getMonth()]} ${year}`;
+    }
+
+    function numberToBangla(num) {
+        if (num === null || num === undefined || num === '') return '';
+      return num.toString().replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+    }
+
+    /* --- প্রিভিউ জেনারেট ফাংশন --- */
+    function generatePreview() {
+      const school = schoolSearch.value;
+      const name = document.getElementById('name').value;
+      const designation = document.getElementById('designation').value;
+      const startDateRaw = document.getElementById('startDate').value;
+      const endDateRaw = document.getElementById('endDate').value;
+      const daysRaw = document.getElementById('days').value;
+      const reason = document.getElementById('reason').value;
+      const address = document.getElementById('address').value;
+      
+      // --- নতুন: পূর্বের ছুটির তথ্য নেওয়া ---
+      const previousLeaveRaw = document.getElementById('previousLeave').value;
+
+      // তারিখ ও দিনকে বাংলা করা
+      const startDate = formatDateBangla(startDateRaw);
+      const endDate = formatDateBangla(endDateRaw);
+      const days = numberToBangla(daysRaw);
+
+      // --- বাংলা ভ্যালিডেশন ---
+      const nonBengaliRegex = /[a-zA-Z]/;
+      if (nonBengaliRegex.test(school) ||
+          nonBengaliRegex.test(name) ||
+          nonBengaliRegex.test(designation) ||
+          nonBengaliRegex.test(reason) ||
+          nonBengaliRegex.test(address)) {
+          
+          showAlert('ফর্মের সকল তথ্য অবশ্যই বাংলায় লিখতে হবে। ইংরেজি অক্ষর ব্যবহার করা যাবে না।');
+          return;
+      }
+      
+      // --- খালি ফিল্ড ভ্যালিডেশন (আগের ছুটির ফিল্ড সহ) ---
+      if (!school || !name || !designation || !startDateRaw || !endDateRaw || !address || previousLeaveRaw === '') {
+        showAlert('অনুগ্রহ করে সকল আবশ্যক ফিল্ড (যেমন: বিদ্যালয়ের নাম, আবেদনকারীর নাম, তারিখ, ঠিকানা, পূর্বের ছুটি) পূরণ করুন।');
+        return;
+      }
+
+      // --- নতুন: ছুটির হিসাব ---
+      const totalCasualLeave = 20;
+      
+      // --- পরিবর্তিত: প্রথমে বাংলা সংখ্যাকে ইংরেজিতে রূপান্তর, তারপর parseInt ---
+      const previousLeaveNumeric = convertBanglaToNumeric(previousLeaveRaw);
+      const previousLeave = parseInt(previousLeaveNumeric); // parseInt এখন ইংরেজি সংখ্যা পাবে
+
+      if (isNaN(previousLeave) || previousLeave < 0 || previousLeave > 20) {
+          showAlert('অনুগ্রহ করে পূর্বের ভোগকৃত ছুটির সংখ্যা সঠিকভাবে লিখুন (০ থেকে ২০ এর মধ্যে)।');
+          return;
+      }
+      
+      const remainingLeave = totalCasualLeave - previousLeave;
+      
+      // সংখ্যাকে বাংলায় রূপান্তর
+      const previousLeaveBn = numberToBangla(previousLeave);
+      const remainingLeaveBn = numberToBangla(remainingLeave);
+
+      // ছুটির সারাংশ লাইন
+      const leaveSummary = `<p style="font-weight: bold; margin-top: 15px;">আমার পূর্বের ভোগকৃত ছুটি ${previousLeaveBn} টি, অবশিষ্ট আছে ${remainingLeaveBn} টি ছুটি।</p>`;
+      // --- ছুটির হিসাব শেষ ---
+
+
+      // যদি কারণ লেখা হয় তবে সেটি, না হলে 'ব্যক্তিগত ও পারিবারিক' শব্দটি ব্যবহার করা হবে
+      const displayReason = reason.trim() ? reason : 'ব্যক্তিগত ও পারিবারিক';
+
+      const preview = `
+        <div id="printArea" style="font-size:14px; line-height:1.8; padding: 1px;">
+        <p class="date-line">তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
+        <p><strong>বরাবর</strong><br>প্রধান শিক্ষক,<br>${school}<br>${address}</p>
+        <p><strong>বিষয়: ${days} দিনের নৈমিত্তিক ছুটির জন্য আবেদন।</p>
+        <p>মাননীয় মহোদয়,<br>
+        বিনীত নিবেদন এই যে, আমি আপনার বিদ্যালয়ের এর একজন ${designation}। ${displayReason} কারণে আমাকে ${startDate} হতে ${endDate} পর্যন্ত (${days} দিন) নৈমিত্তিক ছুটি গ্রহণ করতে হবে।</p>
+        <p>অতএব, মহোদয়ের কাছে বিনীত অনুরোধ, আমাকে উক্ত তারিখসমূহে নৈমিত্তিক ছুটি প্রদানে জনাবের সদয় মর্জি হয়।</p>
+        
+        <!-- নতুন ছুটির হিসাব যোগ করা হলো -->
+        ${leaveSummary}
+        
+        <br>
+        <p style="margin-top: 30px;">বিনীত<br>
+        স্বাক্ষর: __________________<br>
+        নাম: ${name}<br>
+        পদবি: ${designation}<br>
+        ${school}<br>${address}।
+        </p>
+        </div>
+      `;
+
+      document.getElementById('preview').innerHTML = preview;
+      document.getElementById('printButtons').style.display = 'flex';
+    }
+
+    /* --- প্রিন্ট ফাংশন --- */
+    function printOnlyPreview() {
+      const printContents = document.getElementById('printArea').outerHTML;
+      const win = window.open('', '', 'height=800,width=600');
+      
+      win.document.write('<html><head><title>প্রিন্ট</title>');
+      // প্রিন্ট উইন্ডোতে বাংলা ফন্ট ও স্টাইল যোগ করা
+      win.document.write('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">');
+      win.document.write('<style>@page{margin:0.8in;} body{font-family: "Noto Sans Bengali", sans-serif; font-size:14px; line-height: 1.8;}</style>');
+      win.document.write('</head><body>');
+      win.document.write(printContents);
+      win.document.write('</body></html>');
+      
+      win.document.close(); // DOM সম্পূর্ণ লোড হওয়ার জন্য অপেক্ষা
+      win.focus(); // কিছু ব্রাউজারের জন্য দরকার
+      
+      // কন্টেন্ট লোড হওয়ার জন্য সামান্য দেরি
+      setTimeout(() => {
+        win.print();
+        win.close();
+      }, 250);
+    }
+
+    /* --- PDF সেভ ফাংশন (মুছে ফেলা হয়েছে) --- */
+    
+  </script>
+</body>
+</html>
+
